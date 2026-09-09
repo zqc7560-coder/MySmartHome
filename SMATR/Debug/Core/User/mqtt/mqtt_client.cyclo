@@ -9,7 +9,7 @@
 ../Core/User/mqtt/mqtt_client.c:109:5:mqtt_connect	16
 ../Core/User/mqtt/mqtt_client.c:186:5:mqtt_publish	6
 ../Core/User/mqtt/mqtt_client.c:224:10:mqtt_subscribe	3
-../Core/User/mqtt/mqtt_client.c:250:5:mqtt_ping	1
-../Core/User/mqtt/mqtt_client.c:258:6:mqtt_disconnect	1
-../Core/User/mqtt/mqtt_client.c:267:12:handle_publish	16
-../Core/User/mqtt/mqtt_client.c:350:5:mqtt_poll	18
+../Core/User/mqtt/mqtt_client.c:250:5:mqtt_ping	2
+../Core/User/mqtt/mqtt_client.c:261:6:mqtt_disconnect	1
+../Core/User/mqtt/mqtt_client.c:270:12:handle_publish	16
+../Core/User/mqtt/mqtt_client.c:353:5:mqtt_poll	18

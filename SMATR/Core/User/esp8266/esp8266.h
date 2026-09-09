@@ -97,6 +97,15 @@ void esp_force_command_mode(void);
 /** 清空接收缓冲（丢弃残余数据） */
 void esp_flush_rx(void);
 
+/**
+ * 检测透传链路是否已被对端(服务器)关闭。
+ * ESP8266 固件在透传模式下 TCP 连接被对端关闭时，会输出 "CLOSED" 并退回指令模式；
+ * 此时继续按透传收发会失败或产生垃圾数据。命中时本函数清空接收缓冲并复位透传标记，
+ * 供上层立即触发重连。每次命中仅上报一次。
+ * @return true 链路已被对端关闭
+ */
+bool esp_trans_peer_closed(void);
+
 #ifdef __cplusplus
 }
 #endif

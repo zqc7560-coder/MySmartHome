@@ -170,25 +170,11 @@ int onenet_connect(void)
     }
     debug_printf("[ONENET] 识别波特率=%lu, 继续初始化\r\n", (unsigned long)baud);
 
-    /* 1.5) 完全软复位 ESP8266，确保每次启动都是干净状态，
-           消除上次会话残留（透传/半连接）导致的“波特率失配/连 WiFi 失败”偶发问题。
-           注意：AT+RST 后模块可能把 UART 波特率重置为其默认值，
-           因此复位稳定后再自动扫描锁定一次波特率，避免后续通讯失步。 */
-    if (!esp_reset(3000))
-    {
-        /* 复位应答未收到（可能为串口闪烁/供电瞬态），不阻断流程，
-           后续 ATE0 会再次校验通讯；若仍失效则由上层自动重连兜底。 */
-        debug_log("[ONENET] 警告: ESP 复位应答异常，继续尝试");
-    }
-    delay_ms(300);
-    if (!esp_autobaud(&baud))
-    {
-        debug_log("[ONENET] 复位后重同步波特率失败");
-        return ONENET_ERR_ESP;
-    }
-    debug_printf("[ONENET] ESP 已干净复位, 波特率=%lu\r\n", (unsigned long)baud);
-
-    /* 2) 关闭回显（ATE0）。 */
+    /* 2) 关闭回显（ATE0）。
+          注意：不做 AT+RST 软复位——日志显示复位后固件"ready"超时(复位应答异常)，
+               且模块刚复位无线电未就绪，首次 CWJAP 必失败，导致每次重连多花
+               30~60 秒、设备长时间离线。esp_force_command_mode() 已能退出残留的
+               透传模式，esp_autobaud() 已能锁定波特率，直接关回显即可。 */
     if (!esp_at_init(2000))
     {
         debug_log("[ONENET] 失败: ATE0 未应答");
@@ -548,6 +534,16 @@ void onenet_yield(void)
 {
     if (!s_connected)
     {
+        return;
+    }
+
+    /* 链路死亡检测：ESP8266 固件在 TCP 被服务端关闭时会输出 "CLOSED" 并退回指令模式。
+       立即把“最近收到平台报文”时间戳清零，让 app 层看门狗在本轮直接判定会话失效并重连，
+       避免继续在已断链路上收发、拖长设备离线时间。 */
+    if (esp_trans_peer_closed())
+    {
+        debug_log("[ONENET] 检测到 TCP 被服务端关闭(CLOSED)，触发重连");
+        s_last_platform_rx = 0;
         return;
     }
 

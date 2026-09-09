@@ -10,6 +10,6 @@
 ../Core/User/mqtt/mqtt_client.c:186:5:mqtt_publish	32	static
 ../Core/User/mqtt/mqtt_client.c:224:10:mqtt_subscribe	32	static
 ../Core/User/mqtt/mqtt_client.c:250:5:mqtt_ping	16	static
-../Core/User/mqtt/mqtt_client.c:258:6:mqtt_disconnect	16	static
-../Core/User/mqtt/mqtt_client.c:267:12:handle_publish	56	static
-../Core/User/mqtt/mqtt_client.c:350:5:mqtt_poll	48	static
+../Core/User/mqtt/mqtt_client.c:261:6:mqtt_disconnect	16	static
+../Core/User/mqtt/mqtt_client.c:270:12:handle_publish	56	static
+../Core/User/mqtt/mqtt_client.c:353:5:mqtt_poll	48	static

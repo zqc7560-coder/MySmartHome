@@ -29,8 +29,8 @@ typedef enum
 
 #define APP_DEMO_PERIOD_MS           5000U   /* 演示数据上报周期 */
 #define APP_RETRY_PERIOD_MS          5000U   /* 连接失败重试间隔 */
-#define APP_PLATFORM_STALE_MS        40000U  /* 平台回包看门狗：40s 无任何回包即重连
-                                                (keepalive=30s, PINGREQ 每15s, 余量充足) */
+#define APP_PLATFORM_STALE_MS        30000U  /* 平台回包看门狗：30s 无任何回包即重连
+                                                (keepalive=30s, PINGREQ 每15s, 余量1倍) */
 
 static app_state_t s_state     = APP_STATE_IDLE;
 static bool        s_subscribed = false;

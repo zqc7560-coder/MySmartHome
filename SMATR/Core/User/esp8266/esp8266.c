@@ -18,6 +18,12 @@ static char s_cmd_buf[128];
 /* 透传状态标记 */
 static bool s_transparent = false;
 
+/* 对端关闭标记：透传数据流中检测到 "CLOSED"（ESP 固件在 TCP 被对端关闭时输出）后置位 */
+static volatile bool s_peer_closed = false;
+
+/* "CLOSED" 提示串（固件退出透传时输出） */
+static const uint8_t s_closed_pat[] = "CLOSED";
+
 /* ------------------------------------------------------------------------- */
 /* 内部：把字符串原样发送到 ESP8266 串口                                     */
 /* ------------------------------------------------------------------------- */
@@ -201,16 +207,26 @@ bool esp_join_ap(const char *ssid, const char *pass, uint32_t timeout_ms)
     s_cmd_buf[0] = '\0';
     snprintf(s_cmd_buf, sizeof(s_cmd_buf), "AT+CWJAP=\"%s\",\"%s\"", ssid, pass);
 
-    ringbuf_flush(&g_rb_esp_rx);
-    esp_send_str(s_cmd_buf);
-    esp_send_str("\r\n");
-
-    int8_t idx;
-    if (esp_wait_any(expected, 2, &idx, timeout_ms))
+    /* 模块上电/复位后无线电尚未就绪，首次 CWJAP 偶发返回 ERROR，重试一次可显著
+       提高成功率，避免整轮连接流程因一次偶发失败而推倒重来。 */
+    for (uint8_t attempt = 0; attempt < 2; attempt++)
     {
-        /* 顺带等待协商完成，稳定连接 */
-        delay_ms(100);
-        return (idx == 0);   /* GOT IP 成功，ERROR 失败 */
+        ringbuf_flush(&g_rb_esp_rx);
+        esp_send_str(s_cmd_buf);
+        esp_send_str("\r\n");
+
+        int8_t idx;
+        if (esp_wait_any(expected, 2, &idx, timeout_ms))
+        {
+            /* 顺带等待协商完成，稳定连接 */
+            delay_ms(100);
+            if (idx == 0)
+            {
+                return true;   /* GOT IP 成功 */
+            }
+            /* 返回 ERROR：稍等模块状态稳定后重试 */
+            delay_ms(500);
+        }
     }
     return false;
 }
@@ -240,6 +256,7 @@ bool esp_open_transparent(const char *host, uint16_t port, uint32_t timeout_ms)
     }
 
     s_transparent = true;
+    s_peer_closed = false;
     delay_ms(100);
     return true;
 }
@@ -261,6 +278,7 @@ void esp_close_transparent(void)
         esp_send_str("AT+CIPCLOSE\r\n");
     }
     ringbuf_flush(&g_rb_esp_rx);
+    s_peer_closed = false;   /* 主动断开后复位关闭事件，避免影响下一次连接 */
 }
 
 uint16_t esp_trans_send(const uint8_t *data, uint16_t len)
@@ -276,6 +294,17 @@ uint16_t esp_trans_recv(uint8_t *buf, uint16_t max_len, uint32_t timeout_ms)
 {
     if (!s_transparent || buf == NULL || max_len == 0)
     {
+        return 0;
+    }
+
+    /* 对端关闭检测：若接收流中已出现 "CLOSED"（固件退出透传的提示），说明 TCP 已被
+       服务端关闭，链路已死。清空残留字节、复位透传标记并置位事件标记，避免把这些
+       文本当作 MQTT 协议字节解析导致后续报文错位。 */
+    if (ringbuf_search(&g_rb_esp_rx, s_closed_pat, 6) >= 0)
+    {
+        ringbuf_flush(&g_rb_esp_rx);
+        s_transparent = false;
+        s_peer_closed  = true;
         return 0;
     }
 
@@ -309,6 +338,24 @@ bool esp_is_transparent(void)
     return s_transparent;
 }
 
+bool esp_trans_peer_closed(void)
+{
+    /* 事件标记命中则上报一次并清除 */
+    if (s_peer_closed)
+    {
+        s_peer_closed = false;
+        return true;
+    }
+    /* 兜底：若 "CLOSED" 仍残留在接收缓冲（尚未经透传接收路径消费），也直接命中并清空 */
+    if (ringbuf_search(&g_rb_esp_rx, s_closed_pat, 6) >= 0)
+    {
+        ringbuf_flush(&g_rb_esp_rx);
+        s_transparent = false;
+        return true;
+    }
+    return false;
+}
+
 void esp_force_command_mode(void)
 {
     /* +++ 透传转指令模式的退出序列：前后需保持一段静默时间，固件才识别。 */
@@ -319,6 +366,7 @@ void esp_force_command_mode(void)
     delay_ms(1200);                 /* 等待固件识别并退回到指令模式 */
     ringbuf_flush(&g_rb_esp_rx);    /* 丢弃残留应答/透传数据，避免干扰后续 AT 解析 */
     s_transparent = false;
+    s_peer_closed  = false;         /* 复位对端关闭事件，避免新连接被误判 */
 }
 
 void esp_flush_rx(void)

@@ -252,7 +252,10 @@ int mqtt_ping(mqtt_client_t *c)
     c->txlen = 0;
     tx_put_byte(c, 0xC0);                      /* PINGREQ */
     tx_put_byte(c, 0x00);
-    return tx_flush(c);
+    /* 按头文件契约返回 0=成功（底层 transport_send 成功返回 1，此处归一化为 0）。
+       之前直接返回 tx_flush() 导致成功时返回 1，调用方按“0=成功”判断时
+       永远不更新保活时间戳，从而每轮循环都刷 PINGREQ 淹没平台。 */
+    return (tx_flush(c) > 0) ? 0 : -1;
 }
 
 void mqtt_disconnect(mqtt_client_t *c)

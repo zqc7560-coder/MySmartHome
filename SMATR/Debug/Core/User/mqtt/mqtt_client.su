@@ -11,5 +11,5 @@
 ../Core/User/mqtt/mqtt_client.c:224:10:mqtt_subscribe	32	static
 ../Core/User/mqtt/mqtt_client.c:250:5:mqtt_ping	16	static
 ../Core/User/mqtt/mqtt_client.c:258:6:mqtt_disconnect	16	static
-../Core/User/mqtt/mqtt_client.c:267:12:handle_publish	48	static
-../Core/User/mqtt/mqtt_client.c:345:5:mqtt_poll	48	static
+../Core/User/mqtt/mqtt_client.c:267:12:handle_publish	56	static
+../Core/User/mqtt/mqtt_client.c:350:5:mqtt_poll	48	static

@@ -12,4 +12,4 @@
 ../Core/User/mqtt/mqtt_client.c:250:5:mqtt_ping	1
 ../Core/User/mqtt/mqtt_client.c:258:6:mqtt_disconnect	1
 ../Core/User/mqtt/mqtt_client.c:267:12:handle_publish	16
-../Core/User/mqtt/mqtt_client.c:345:5:mqtt_poll	18
+../Core/User/mqtt/mqtt_client.c:350:5:mqtt_poll	18

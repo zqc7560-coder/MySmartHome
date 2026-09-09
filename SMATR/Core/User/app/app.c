@@ -37,7 +37,8 @@ static bool        s_subscribed = false;
 static uint32_t    s_demo_timer = 0;
 static uint32_t    s_retry_timer = 0;
 static uint32_t    s_last_activity = 0;
-static float       s_demo_temp   = 26.0f;   /* 模拟温度数据 */
+static float       s_demo_temp   = 26.0f;   /* 最近一次有效温度 */
+static uint16_t    s_demo_hum    = 500;     /* 最近一次有效湿度(0.1%RH，500=50.0%RH) */
 
 /* ------------------------------------------------------------------------- */
 /* 静态函数声明                                                              */
@@ -125,8 +126,11 @@ static void onenet_property_set_handle(const char *payload, uint16_t plen)
     memcpy(tmp, payload, n);
     tmp[n] = '\0';
 
-    /* 提取响应用 id */
-    char pkt_id[16] = "0";
+    /* 诊断：打印平台 set 的真实原文，核对应答 id 是否与请求中的 id 一致 */
+    debug_printf("[ONENET] set 原文: %s\r\n", tmp);
+
+    /* 提取响应用 id（OneNet 的请求 id 可能较长，缓冲给足避免截断导致应答无法关联） */
+    char pkt_id[64] = "0";
     app_json_get_id(tmp, pkt_id, sizeof(pkt_id));
 
     /* 查找 LED 属性标识符并按其值控制 */
@@ -165,18 +169,19 @@ static void onenet_property_set_handle(const char *payload, uint16_t plen)
         }
     }
 
+    /* 先回传应答，让平台端设置操作尽快成功（应答越早，越不容易超时） */
+    int rc = onenet_reply_property_set(pkt_id, 200, "ok", handled ? (led_get() ? 1 : 0) : -1);
+    debug_printf("[ONENET] set_reply id=%s rc=%d\r\n", pkt_id, rc);
+
     if (handled)
     {
-        debug_printf("[LED] 云端物模型设置: LED=%s\r\n", led_get() ? "亮" : "灭");
+        debug_printf("[LED] 云端物模型设置: LED=%s (id=%s)\r\n", led_get() ? "亮" : "灭", pkt_id);
         (void)led_publish_state();
     }
     else
     {
-        debug_printf("[ONENET] 属性设置未识别或非LED: %s\r\n", tmp);
+        debug_printf("[ONENET] 属性设置未识别或非LED id=%s: %s\r\n", pkt_id, tmp);
     }
-
-    /* 回传应答，让平台端设置操作成功 */
-    (void)onenet_reply_property_set(pkt_id, 200, "ok");
 }
 
 /* ------------------------------------------------------------------------- */
@@ -189,16 +194,21 @@ static void onenet_property_get_handle(const char *payload, uint16_t plen)
     memcpy(tmp, payload, n);
     tmp[n] = '\0';
 
-    char pkt_id[16] = "0";
+    char pkt_id[64] = "0";
     app_json_get_id(tmp, pkt_id, sizeof(pkt_id));
 
     debug_log("[ONENET] 收到属性获取请求，回传当前属性");
+    debug_printf("[ONENET] get id=%s\r\n", pkt_id);
     /* 把当前温度与 LED 状态回传给平台（get_reply） */
-    (void)onenet_thing_property_get_reply(pkt_id, s_demo_temp, led_get() ? 1 : 0);
+    (void)onenet_thing_property_get_reply(pkt_id, s_demo_temp, s_demo_hum, led_get() ? 1 : 0);
 }
 
 static void onenet_message_cb_impl(const char *topic, const uint8_t *payload, uint16_t plen)
 {
+    /* 诊断：打印每条下发消息的真实主题，用于核对 set/get 到底走哪个通道 */
+    debug_printf("[ONENET] 下发 topic=%s\r\n", topic);
+    (void)plen;
+    (void)payload;
     /* $sys/.../thing/property/set 为物模型属性设置（云端控制） */
     if (strstr(topic, "/thing/property/set") != NULL)
     {
@@ -467,12 +477,19 @@ void app_loop(void)
             if ((now_ms() - s_demo_timer) >= APP_DEMO_PERIOD_MS)
             {
                 s_demo_timer = now_ms();
-                /* 简单模拟温度在 20~32 度间缓慢变化 */
-                s_demo_temp += 0.5f;
+
+                /* 模拟温度数据（不依赖传感器）：在 20~32℃ 之间缓慢随机游走 */
+                int step = (rand() % 5) - 2;               /* -2 ~ +2 */
+                s_demo_temp += (float)step;
                 if (s_demo_temp > 32.0f)
+                {
+                    s_demo_temp = 32.0f;
+                }
+                if (s_demo_temp < 20.0f)
                 {
                     s_demo_temp = 20.0f;
                 }
+
                 int rc = onenet_report_property(ONENET_TEMP_PROP_ID, s_demo_temp);
                 debug_printf("[APP] 周期上报 EnvironmentTemperature=%d, rc=%d\r\n", (int)s_demo_temp, rc);
                 if (rc != ONENET_OK)

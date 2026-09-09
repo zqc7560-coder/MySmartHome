@@ -58,5 +58,5 @@ bool led_get(void)
 int led_publish_state(void)
 {
     /* 以物模型属性上报 LED 状态（标识符由 ONENET_LED_PROP_ID 指定，1=亮/0=灭） */
-    return onenet_report_property(ONENET_LED_PROP_ID, s_led_on ? 1.0f : 0.0f);
+    return onenet_report_property_b(ONENET_LED_PROP_ID, s_led_on ? 1 : 0);
 }

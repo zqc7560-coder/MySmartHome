@@ -1,4 +1,5 @@
 ../Core/User/common/delay.c:10:10:now_ms	1
 ../Core/User/common/delay.c:15:6:delay_ms	2
-../Core/User/common/delay.c:24:6:timeout_start	2
-../Core/User/common/delay.c:34:6:timeout_expired	2
+../Core/User/common/delay.c:24:6:delay_us	3
+../Core/User/common/delay.c:43:6:timeout_start	2
+../Core/User/common/delay.c:53:6:timeout_expired	2

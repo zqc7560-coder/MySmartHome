@@ -140,25 +140,30 @@ bool esp_autobaud(uint32_t *out_baud)
     static const uint32_t candidates[] = {115200U, 9600U, 57600U, 38400U, 230400U, 460800U};
     static const char *reachable[] = {"OK", "ERROR"};
 
-    for (uint32_t i = 0; i < (uint32_t)(sizeof(candidates) / sizeof(candidates[0])); i++)
+    /* 复位/刚上电时模块可能启动较慢：整轮候选扫两遍、每波特率等更久，
+       可显著减少"没有匹配的波特率"这种偶发失败 */
+    for (uint32_t pass = 0; pass < 2; pass++)
     {
-        /* 以候选波特率重设 USART2 并重新挂起接收中断 */
-        uart_esp_set_baud(candidates[i]);
-        usart_esp_rx_rearm();
-        ringbuf_flush(&g_rb_esp_rx);
-
-        /* 发送 "AT\r\n"，等待 OK/ERROR */
-        esp_send_str("AT");
-        esp_send_str("\r\n");
-
-        int8_t idx;
-        if (esp_wait_any(reachable, 2, &idx, 500))
+        for (uint32_t i = 0; i < (uint32_t)(sizeof(candidates) / sizeof(candidates[0])); i++)
         {
-            if (out_baud != NULL)
+            /* 以候选波特率重设 USART2 并重新挂起接收中断 */
+            uart_esp_set_baud(candidates[i]);
+            usart_esp_rx_rearm();
+            ringbuf_flush(&g_rb_esp_rx);
+
+            /* 发送 "AT\r\n"，等待 OK/ERROR */
+            esp_send_str("AT");
+            esp_send_str("\r\n");
+
+            int8_t idx;
+            if (esp_wait_any(reachable, 2, &idx, 900))
             {
-                *out_baud = candidates[i];
+                if (out_baud != NULL)
+                {
+                    *out_baud = candidates[i];
+                }
+                return true;
             }
-            return true;
         }
     }
     return false;
@@ -171,7 +176,7 @@ bool esp_reset(uint32_t timeout_ms)
     esp_send_str("AT+RST\r\n");
     /* 复位后可能需要更长等待；用传入的超时等待 "ready" */
     bool ok = esp_wait_pattern("ready", timeout_ms);
-    delay_ms(200);   /* 等待固件稳定 */
+    delay_ms(500);   /* 等待固件稳定后再进行后续指令，避免波特率/联网偶发失配 */
     return ok;
 }
 

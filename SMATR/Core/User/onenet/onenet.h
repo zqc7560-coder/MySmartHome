@@ -59,6 +59,7 @@ extern "C" {
 /* LED / 温度 在物模型中的属性标识符（需与平台物模型创建的 identifier 完全一致） */
 #define ONENET_LED_PROP_ID      "led"
 #define ONENET_TEMP_PROP_ID     "EnvironmentTemperature"
+#define ONENET_HUM_PROP_ID      "humidity"
 
 /* ------------------------------------------------------------------------- */
 /* 云端消息回调：收到 $creq/{device_id} 下发的命令时回调                        */
@@ -120,17 +121,21 @@ int onenet_subscribe_cmd(void);
 /** 新版物模型：上报单个属性到 thing/property/post（标识符需与物模型一致） */
 int onenet_report_property(const char *idstr, float value);
 
+/** 新版物模型：上报单个 bool 属性（值用 true/false，兼容 bool 类型物模型） */
+int onenet_report_property_b(const char *idstr, int on);
+
 /** 新版物模型：订阅平台属性设置主题 thing/property/set（用于云端控制LED等） */
 int onenet_subscribe_property_set(void);
 
 /** 新版物模型：订阅平台属性获取主题 thing/property/get（平台读当前属性） */
 int onenet_subscribe_property_get(void);
 
-/** 新版物模型：回传属性获取应答接口，把当前温度与LED状态回给平台 */
-int onenet_thing_property_get_reply(const char *pkt_id, float temp, int led);
+/** 新版物模型：回传属性获取应答接口，把当前温度、湿度、LED 状态回给平台 */
+int onenet_thing_property_get_reply(const char *pkt_id, float temp, uint16_t hum_x10, int led);
 
-/** 新版物模型：回传属性设置应答到 thing/property/set_reply */
-int onenet_reply_property_set(const char *pkt_id, int code, const char *msg);
+/** 新版物模型：对属性设置返回应答 thing/property/set_reply（QoS1 提高可靠投递）。
+ * @param led_on LED 状态：>=0 时在 data 中回填 true/false；<0 表示无 LED，data 置空 */
+int onenet_reply_property_set(const char *pkt_id, int code, const char *msg, int led_on);
 
 /** 连接活性探针（诊断用）：发送 PINGREQ 等待回复。
  * @return 1=连接活着；0=无回复(链路已断)；<0 未连接/发送失败

@@ -21,6 +21,25 @@ void delay_ms(uint32_t n)
     }
 }
 
+void delay_us(uint32_t n)
+{
+    static bool s_dwt_ready = false;
+    if (!s_dwt_ready)
+    {
+        /* 使能 DWT 周期计数器（Cortex-M3） */
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+        DWT->CYCCNT = 0;
+        DWT->CTRL  |= DWT_CTRL_CYCCNTENA_Msk;
+        s_dwt_ready = true;
+    }
+    uint32_t ticks = n * (SystemCoreClock / 1000000U);   /* 每 us 的周期数 */
+    uint32_t start = DWT->CYCCNT;
+    while ((uint32_t)(DWT->CYCCNT - start) < ticks)
+    {
+        /* 空转 */
+    }
+}
+
 void timeout_start(timeout_t *t, uint32_t duration_ms)
 {
     if (t == NULL)

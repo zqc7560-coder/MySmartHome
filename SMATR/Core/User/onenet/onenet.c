@@ -170,10 +170,25 @@ int onenet_connect(void)
     }
     debug_printf("[ONENET] 识别波特率=%lu, 继续初始化\r\n", (unsigned long)baud);
 
-    /* 2) 关闭回显（ATE0）。
-          注意：此处不做 AT+RST 软复位——模块重启后波特率会回到它 Flash 里
-               保存的默认值，丢掉刚自动同步到的波特率导致再次失步。自动识别已
-               能建立稳定通讯，直接关回显即可。 */
+    /* 1.5) 完全软复位 ESP8266，确保每次启动都是干净状态，
+           消除上次会话残留（透传/半连接）导致的“波特率失配/连 WiFi 失败”偶发问题。
+           注意：AT+RST 后模块可能把 UART 波特率重置为其默认值，
+           因此复位稳定后再自动扫描锁定一次波特率，避免后续通讯失步。 */
+    if (!esp_reset(3000))
+    {
+        /* 复位应答未收到（可能为串口闪烁/供电瞬态），不阻断流程，
+           后续 ATE0 会再次校验通讯；若仍失效则由上层自动重连兜底。 */
+        debug_log("[ONENET] 警告: ESP 复位应答异常，继续尝试");
+    }
+    delay_ms(300);
+    if (!esp_autobaud(&baud))
+    {
+        debug_log("[ONENET] 复位后重同步波特率失败");
+        return ONENET_ERR_ESP;
+    }
+    debug_printf("[ONENET] ESP 已干净复位, 波特率=%lu\r\n", (unsigned long)baud);
+
+    /* 2) 关闭回显（ATE0）。 */
     if (!esp_at_init(2000))
     {
         debug_log("[ONENET] 失败: ATE0 未应答");
@@ -246,6 +261,17 @@ bool onenet_is_connected(void)
 }
 
 int onenet_publish_raw(const char *topic, const uint8_t *payload, uint16_t plen, uint8_t qos)
+{
+    if (!s_connected)
+    {
+        return ONENET_ERR_NOT_CONNECTED;
+    }
+    int rc = mqtt_publish(&s_mqtt, topic, payload, plen, qos);
+    return (rc == 0) ? ONENET_OK : ONENET_ERR_ESP;
+}
+
+/* 同 onenet_publish_raw，但固定以 QoS1 发送（用于命令应答，提高可靠性与关联成功率） */
+int onenet_publish_raw_qos(const char *topic, const uint8_t *payload, uint16_t plen, uint8_t qos)
 {
     if (!s_connected)
     {
@@ -364,6 +390,29 @@ int onenet_report_property(const char *idstr, float value)
 }
 
 /* ------------------------------------------------------------------------- */
+/* 新版物模型：上报单个 bool 属性（值用 true/false，兼容 bool 类型物模型）       */
+/* ------------------------------------------------------------------------- */
+int onenet_report_property_b(const char *idstr, int on)
+{
+    if (!s_connected)
+    {
+        return ONENET_ERR_NOT_CONNECTED;
+    }
+    static uint32_t s_prop_id2 = 200;            /* 消息id，避开 report_property 的序列 */
+    int m = snprintf(s_json, sizeof(s_json),
+                     "{\"id\":\"%lu\",\"version\":\"1.0\",\"params\":{\"%s\":{\"value\":%s}}}",
+                     (unsigned long)s_prop_id2,
+                     (idstr != NULL) ? idstr : "value",
+                     on ? "true" : "false");
+    if (m <= 0)
+    {
+        return ONENET_ERR_ESP;
+    }
+    s_prop_id2++;
+    return onenet_publish_raw(ONENET_PROP_POST_TOPIC, (const uint8_t *)s_json, (uint16_t)m, 0);
+}
+
+/* ------------------------------------------------------------------------- */
 /* 新版物模型：订阅平台属性设置主题 thing/property/set                         */
 /* ------------------------------------------------------------------------- */
 int onenet_subscribe_property_set(void)
@@ -395,20 +444,24 @@ int onenet_subscribe_property_get(void)
 /* 新版物模型：回传属性获取应答 thing/property/get_reply                       */
 /* 应答格式：{"id":"..","code":200,"msg":"ok","data":{<标识符>:值,...}}        */
 /* ------------------------------------------------------------------------- */
-int onenet_thing_property_get_reply(const char *pkt_id, float temp, int led)
+int onenet_thing_property_get_reply(const char *pkt_id, float temp, uint16_t hum_x10, int led_on)
 {
     if (!s_connected)
     {
         return ONENET_ERR_NOT_CONNECTED;
     }
     char tb[24];
+    char hb[24];
     (void)format_float(tb, temp, 2);
+    (void)format_float(hb, ((float)hum_x10) / 10.0f, 2);        /* 0.1%RH -> %RH */
+    /* LED 为 bool 属性：回传 true/false 而非数字，否则物模型校验不通过 */
     int m = snprintf(s_json, sizeof(s_json),
                      "{\"id\":\"%s\",\"code\":200,\"msg\":\"ok\",\"data\":{\""
-                     ONENET_TEMP_PROP_ID "\":%s,\"" ONENET_LED_PROP_ID "\":%d}}",
-                     (pkt_id != NULL) ? pkt_id : "0",
-                     tb,
-                     led ? 1 : 0);
+                     ONENET_TEMP_PROP_ID "\":%s,\"" ONENET_HUM_PROP_ID "\":%s,\""
+                     ONENET_LED_PROP_ID "\":%s}}",
+                     (pkt_id != NULL && pkt_id[0] != '\0') ? pkt_id : "",
+                     tb, hb,
+                     led_on ? "true" : "false");
     if (m <= 0)
     {
         return ONENET_ERR_ESP;
@@ -419,21 +472,36 @@ int onenet_thing_property_get_reply(const char *pkt_id, float temp, int led)
 /* ------------------------------------------------------------------------- */
 /* 新版物模型：对属性设置返回应答 thing/property/set_reply                     */
 /* ------------------------------------------------------------------------- */
-int onenet_reply_property_set(const char *pkt_id, int code, const char *msg)
+int onenet_reply_property_set(const char *pkt_id, int code, const char *msg, int led_on)
 {
     if (!s_connected)
     {
         return ONENET_ERR_NOT_CONNECTED;
     }
-    int m = snprintf(s_json, sizeof(s_json),
-                     "{\"id\":\"%s\",\"code\":%d,\"msg\":\"%s\"}",
-                     (pkt_id != NULL) ? pkt_id : "0", code,
-                     (msg != NULL) ? msg : "ok");
+    /* 平台下发 set 的 payload 通常不含 id 字段；此时应答 id 置空串。
+       data 回填本次实际设置的 LED 值（true/false），便于平台校验；
+       使用 QoS1 提高应答投递可靠性。 */
+    int m;
+    if (led_on < 0)
+    {
+        m = snprintf(s_json, sizeof(s_json),
+                     "{\"id\":\"%s\",\"code\":%d,\"msg\":\"%s\",\"data\":{}}",
+                     (pkt_id != NULL && pkt_id[0] != '\0' && strcmp(pkt_id, "0") != 0) ? pkt_id : "",
+                     code, (msg != NULL) ? msg : "ok");
+    }
+    else
+    {
+        m = snprintf(s_json, sizeof(s_json),
+                     "{\"id\":\"%s\",\"code\":%d,\"msg\":\"%s\",\"data\":{\"" ONENET_LED_PROP_ID "\":%s}}",
+                     (pkt_id != NULL && pkt_id[0] != '\0' && strcmp(pkt_id, "0") != 0) ? pkt_id : "",
+                     code, (msg != NULL) ? msg : "ok",
+                     led_on ? "true" : "false");
+    }
     if (m <= 0)
     {
         return ONENET_ERR_ESP;
     }
-    return onenet_publish_raw(ONENET_PROP_SET_REPLY, (const uint8_t *)s_json, (uint16_t)m, 0);
+    return onenet_publish_raw_qos(ONENET_PROP_SET_REPLY, (const uint8_t *)s_json, (uint16_t)m, 1);
 }
 
 /* ------------------------------------------------------------------------- */

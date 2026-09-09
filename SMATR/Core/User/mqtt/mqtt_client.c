@@ -294,8 +294,9 @@ static int handle_publish(mqtt_client_t *c, uint32_t remaining)
     }
     c->rxbuf[got] = '\0';                      /* 主题以 '\0' 结尾 */
 
-    /* QoS1 时还带有 2 字节报文标识符 */
-    uint32_t remaining_payload = remaining - (2U + topic_len);
+    /* 读取负载。无论负载多大都整条读完：存得下的进缓冲，存不下的直接丢弃，
+       确保退出本函数后字节流恰好位于下一条报文的固定头上，避免解析错位。 */
+    uint32_t remaining_payload = remaining - (2U + (uint32_t)topic_len);
     uint8_t  pub_pkt_id[2] = {0, 0};
     if (c->pending_qos > 0)
     {
@@ -306,19 +307,23 @@ static int handle_publish(mqtt_client_t *c, uint32_t remaining)
         remaining_payload -= 2;
     }
 
-    /* 读取负载（限制在 rxbuf 剩余空间） */
-    uint16_t cap = (uint16_t)(MQTT_RX_BUF_SIZE - got - 1);
-    uint16_t want = (remaining_payload < cap) ? (uint16_t)remaining_payload : cap;
+    uint16_t payload_cap = (uint16_t)(MQTT_RX_BUF_SIZE - got - 1);
     uint16_t payload_pos = got + 1;
     uint16_t read_so_far = 0;
-    while (read_so_far < want)
+    uint8_t  discard_buf = 0;
+    for (uint32_t i = 0; i < remaining_payload; i++)
     {
-        int r = rx_byte(c, &c->rxbuf[payload_pos + read_so_far], 3000);
+        int r = rx_byte(c, &discard_buf, 3000);
         if (r != 1)
         {
-            break;
+            break;                       /* 流被中断，无法继续对齐 */
         }
-        read_so_far++;
+        if (read_so_far < payload_cap)
+        {
+            c->rxbuf[payload_pos + read_so_far] = discard_buf;
+            read_so_far++;
+        }
+        /* 超过缓冲部分无需保存，仅消费该字节 */
     }
 
     /* 回调上层 */

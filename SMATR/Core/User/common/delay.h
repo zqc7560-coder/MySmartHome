@@ -32,6 +32,9 @@ uint32_t now_ms(void);
 /** 忙等待延时 n 毫秒（基于 HAL 节拍，非阻塞于中断之外） */
 void delay_ms(uint32_t n);
 
+/** 微秒级忙等待（基于 DWT 周期计数，精确到 us；首次调用自动使能 DWT） */
+void delay_us(uint32_t n);
+
 /** 启动一个超时计时器 */
 void timeout_start(timeout_t *t, uint32_t duration_ms);
 

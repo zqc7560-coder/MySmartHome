@@ -24,5 +24,14 @@ C_DEPS :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
+Core/User/app \
+Core/User/common \
+Core/User/debug \
+Core/User/esp8266 \
+Core/User/led \
+Core/User/mqtt \
+Core/User/onenet \
+Core/User/port \
+Core/User/uart \
 Drivers/STM32F1xx_HAL_Driver/Src \
 

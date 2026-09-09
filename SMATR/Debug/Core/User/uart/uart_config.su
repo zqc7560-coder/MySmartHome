@@ -1,0 +1,6 @@
+../Core/User/uart/uart_config.c:32:6:HAL_UART_MspInit	48	static
+../Core/User/uart/uart_config.c:83:13:MX_USART1_UART_Init	16	static
+../Core/User/uart/uart_config.c:101:13:MX_USART2_UART_Init	16	static
+../Core/User/uart/uart_config.c:121:19:uart_init_all	8	static
+../Core/User/uart/uart_config.c:135:10:uart_send	32	static
+../Core/User/uart/uart_config.c:146:6:uart_esp_set_baud	16	static

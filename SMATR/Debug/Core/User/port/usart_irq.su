@@ -1,0 +1,8 @@
+../Core/User/port/usart_irq.c:28:6:USART1_IRQHandler	8	static
+../Core/User/port/usart_irq.c:33:6:USART2_IRQHandler	8	static
+../Core/User/port/usart_irq.c:41:6:HAL_UART_RxCpltCallback	16	static
+../Core/User/port/usart_irq.c:61:6:HAL_UART_TxCpltCallback	16	static
+../Core/User/port/usart_irq.c:69:6:HAL_UART_ErrorCallback	24	static
+../Core/User/port/usart_irq.c:87:19:usart_irq_rx_start	16	static
+../Core/User/port/usart_irq.c:97:19:usart_esp_rx_rearm	8	static
+../Core/User/port/usart_irq.c:102:7:usart_irq_debug_get_priv	4	static

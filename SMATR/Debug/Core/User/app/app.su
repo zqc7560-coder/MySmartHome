@@ -1,0 +1,11 @@
+../Core/User/app/app.c:54:13:led_apply_command	16	static
+../Core/User/app/app.c:92:13:app_json_get_id	32	static
+../Core/User/app/app.c:121:13:onenet_property_set_handle	176	static
+../Core/User/app/app.c:185:13:onenet_property_get_handle	176	static
+../Core/User/app/app.c:200:13:onenet_message_cb_impl	96	static
+../Core/User/app/app.c:231:13:app_start_connect	8	static
+../Core/User/app/app.c:242:13:app_log_status	16	static
+../Core/User/app/app.c:254:13:app_cmd_handler	112	static
+../Core/User/app/app.c:395:6:app_init	8	static
+../Core/User/app/app.c:416:6:app_loop	24	static
+../Core/User/app/app.c:509:5:app_selftest	16	static

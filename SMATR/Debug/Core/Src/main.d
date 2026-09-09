@@ -23,6 +23,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h \
  ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h \
+ ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h \
  E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
  E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/projdefs.h \
@@ -32,7 +33,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/mpu_wrappers.h \
  E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/newlib-freertos.h \
  E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/task.h \
- E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/list.h
+ E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/list.h \
+ ../Core/User/app/app.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal.h:
 ../Core/Inc/stm32f1xx_hal_conf.h:
@@ -58,6 +60,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_pwr.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim.h:
 ../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_tim_ex.h:
+../Drivers/STM32F1xx_HAL_Driver/Inc/stm32f1xx_hal_uart.h:
 E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
 E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/projdefs.h:
@@ -68,3 +71,4 @@ E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/mpu_
 E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/newlib-freertos.h:
 E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/task.h:
 E:/STM\ 32\ Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc/list.h:
+../Core/User/app/app.h:

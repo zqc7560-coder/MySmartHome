@@ -1,0 +1,13 @@
+../Core/User/common/ringbuf.c:13:6:ringbuf_init	1
+../Core/User/common/ringbuf.c:22:6:ringbuf_flush	1
+../Core/User/common/ringbuf.c:32:6:ringbuf_is_empty	1
+../Core/User/common/ringbuf.c:37:10:ringbuf_avail	1
+../Core/User/common/ringbuf.c:42:10:ringbuf_free	1
+../Core/User/common/ringbuf.c:50:6:ringbuf_write_one	2
+../Core/User/common/ringbuf.c:63:10:ringbuf_write_buf	3
+../Core/User/common/ringbuf.c:80:9:ringbuf_read_byte	2
+../Core/User/common/ringbuf.c:95:9:ringbuf_peek_byte	2
+../Core/User/common/ringbuf.c:105:10:ringbuf_peek_buf	3
+../Core/User/common/ringbuf.c:120:10:ringbuf_discard	2
+../Core/User/common/ringbuf.c:135:9:ringbuf_search	9
+../Core/User/common/ringbuf.c:167:6:ringbuf_selftest	10

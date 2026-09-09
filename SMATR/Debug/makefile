@@ -10,6 +10,15 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include Drivers/STM32F1xx_HAL_Driver/Src/subdir.mk
+-include Core/User/uart/subdir.mk
+-include Core/User/port/subdir.mk
+-include Core/User/onenet/subdir.mk
+-include Core/User/mqtt/subdir.mk
+-include Core/User/led/subdir.mk
+-include Core/User/esp8266/subdir.mk
+-include Core/User/debug/subdir.mk
+-include Core/User/common/subdir.mk
+-include Core/User/app/subdir.mk
 -include Core/Startup/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk

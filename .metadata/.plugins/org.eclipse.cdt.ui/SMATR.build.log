@@ -1,17 +1,18 @@
-14:44:54 **** Incremental Build of configuration Debug for project SMATR ****
+17:43:50 **** Incremental Build of configuration Debug for project SMATR ****
 make -j16 all 
-arm-none-eabi-gcc "../Core/Src/main.c" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xB -c -I../Core/Inc -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS" -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/Src/main.d" -MT"Core/Src/main.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/Src/main.o"
+arm-none-eabi-gcc "../Core/User/onenet/onenet.c" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xB -c -I../Core/Inc -I../Core/User -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS" -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/User/onenet/onenet.d" -MT"Core/User/onenet/onenet.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/User/onenet/onenet.o"
+arm-none-eabi-gcc "../Core/User/app/app.c" -mcpu=cortex-m3 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F103xB -c -I../Core/Inc -I../Core/User -I../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy -I../Drivers/STM32F1xx_HAL_Driver/Inc -I../Drivers/CMSIS/Device/ST/STM32F1xx/Include -I../Drivers/CMSIS/Include -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS" -I"E:/STM 32 Project/智能家居项目源码/MySmartHome/SMATR/FreeRTOS/Inc" -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"Core/User/app/app.d" -MT"Core/User/app/app.o" --specs=nano.specs -mfloat-abi=soft -mthumb -o "Core/User/app/app.o"
 arm-none-eabi-gcc -o "SMATR.elf" @"objects.list"   -mcpu=cortex-m3 -T"E:\STM 32 Project\智能家居项目源码\MySmartHome\SMATR\STM32F103C8TX_FLASH.ld" --specs=nosys.specs -Wl,-Map="SMATR.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 Finished building target: SMATR.elf
  
 arm-none-eabi-size  SMATR.elf 
 arm-none-eabi-objdump -h -S SMATR.elf  > "SMATR.list"
    text	   data	    bss	    dec	    hex	filename
-   5152	     12	   1644	   6808	   1a98	SMATR.elf
+  43032	    572	   4292	  47896	   bb18	SMATR.elf
 Finished building: default.size.stdout
  
 Finished building: SMATR.list
  
 
-14:44:56 Build Finished. 0 errors, 0 warnings. (took 1s.752ms)
+17:43:52 Build Finished. 0 errors, 0 warnings. (took 1s.722ms)
 

@@ -1,0 +1,17 @@
+../Core/User/esp8266/esp8266.c:24:13:esp_send_str	1
+../Core/User/esp8266/esp8266.c:32:13:esp_wait_pattern	5
+../Core/User/esp8266/esp8266.c:62:13:esp_wait_any	8
+../Core/User/esp8266/esp8266.c:102:13:esp_cmd	2
+../Core/User/esp8266/esp8266.c:122:6:esp_test	1
+../Core/User/esp8266/esp8266.c:127:6:esp_at_init	2
+../Core/User/esp8266/esp8266.c:137:6:esp_autobaud	4
+../Core/User/esp8266/esp8266.c:167:6:esp_reset	1
+../Core/User/esp8266/esp8266.c:178:6:esp_set_mode	2
+../Core/User/esp8266/esp8266.c:189:6:esp_join_ap	4
+../Core/User/esp8266/esp8266.c:213:6:esp_open_transparent	4
+../Core/User/esp8266/esp8266.c:242:6:esp_close_transparent	2
+../Core/User/esp8266/esp8266.c:261:10:esp_trans_send	4
+../Core/User/esp8266/esp8266.c:270:10:esp_trans_recv	7
+../Core/User/esp8266/esp8266.c:302:6:esp_is_transparent	1
+../Core/User/esp8266/esp8266.c:307:6:esp_force_command_mode	1
+../Core/User/esp8266/esp8266.c:319:6:esp_flush_rx	1
